@@ -1,22 +1,20 @@
-
 var React = require('react');
-var PubSub=require('PubSubJS');
-
-
-var Modal = require('../components/Modal');
-var Pager = require('../components/Pager');
-var Alert = require('../components/Alert');
+var PubSub=require('PubSubJS');  //订阅/发布者插件
+var Modal = require('../components/Modal'); //弹窗组件
+var Pager = require('../components/Pager'); //分页组件
+var Alert = require('../components/Alert'); //alert组件
+var Loading = require('../components/Loading');
 var RenderForm = require('../components/RenderForm');
 var $=require('jquery');
-require('../lib/jqExtend');
-var deepCopy= function(source) { 
+require('../lib/jqExtend'); //jq拓展
+var deepCopy= function(source) {  //深拷贝方法
   var result={};
   for (var key in source) {
     result[key] = typeof source[key]==='object'?deepCopy(source[key]):source[key];
   } 
   return result; 
 }
-var ymData = {
+var ymData = {  //添加页面接口表单数据
     "rule": {
         "field": "rule",
         "name": "接口规则，参考thinkphp路由定义",
@@ -64,7 +62,7 @@ var ymData = {
     }
 }
 
-var apiData=deepCopy(ymData);
+var apiData=deepCopy(ymData);  //添加api接口表单数据
 
 apiData["method"]={
           "field": "method",
@@ -89,7 +87,7 @@ apiData["method"]={
               "value":"head"
           }]
       };
-var qtData = {
+var qtData = {  //添加其他接口表单数据
     "name": {
         "field": "name",
         "name": "接口名称",
@@ -105,7 +103,7 @@ var qtData = {
     }
 }
 
-var formData={
+var formData={   //添加所有接口表单数据
 
         
         "type": {
@@ -138,57 +136,44 @@ var formData={
 var MainCont=React.createClass({
    getDefaultProps:function(){
       return {
-            name:"table",
-            tableBase:[],
-            ifBindSP:true
+            
         };
    },
    getInitialState:function(){
       return {
-          loading:false,
-          tableBase:this.props.tableBase,
-          editFormShow:false,
-          modalShow:false,
-          rendData:[],
-          selArr:[],
-          page:{
-            page_count:0,
-            page_index:1,
-            record_count:0
+          loading:false,  //是否加载中， 保留，暂无作用
+          modalShow:false, //是否显示编辑表单弹窗
+          rendData:[], //列表数据
+          selArr:[],  //选择列表数组,保留,用于全选
+          page:{ //分页数据
+            page_count:0, //分页页数
+            page_index:1,//当前页码
+            record_count:0 //共计条数
           },
-          len:10,
+          len:2, //分页长度
 
-          formData:formData
+          formData:formData  //表单数据渲染
       };
    },
    componentWillReceiveProps:function(nextProps){
 
-      if(nextProps.tableBase!=this.state.tableBase){
-         this.setState({tableBase:nextProps.tableBase});
-      }
+     
    },
    componentDidMount: function () {
-   this.upData();
-    if(this.props.ifBindSP&&PubSub){
-      this.pubsub_token = PubSub.subscribe(this.props.name, function (evename,stateObj) {
-        this.setState(stateObj);
-      }.bind(this));
-    }
+    this.upData();
+   
    },
-   componentWillUnmount: function () {
-    if(this.props.ifBindSP&&PubSub){
-      PubSub.unsubscribe(this.pubsub_token);
-    }
-   },
-   upData:function(callback){
+  
+   upData:function(callback){ //更新表单数据
       var _this=this;
+       _this.setState({loading:true})
       $.get('/system/resource.do',{page:this.state.page.page_index,len:this.state.len},function(data){
-         _this.setState({rendData:data.data,page:data.page})
+         _this.setState({rendData:data.data,page:data.page,loading:false})
          if(callback) callback();
       },'json')
    },
-   formType:"add",
-   eidtColumn:function(id){
+   formType:"add", //表单当前类型，添加（add）还是编辑（edit）
+   eidtColumn:function(id){ //编辑数据
       var _this=this;
       $.get('/system/resource/'+id+'.do',function(data){
         if(data.data.type==1){
@@ -225,15 +210,16 @@ var MainCont=React.createClass({
       },'json')
       
    },
-   toggleModal:function(){
+   toggleModal:function(){ //切换弹窗显示
     this.setState({modalShow:!this.state.modalShow})
    },
-   addColumn:function(){
+   addColumn:function(){ //添加数据
       this.formType="add";
+      console.log(formData)
       this.setState({formData:formData,modalShow:!this.state.modalShow})
 
    },
-   setEidtForm:function(data){
+   setEidtForm:function(data){  //保存表单
     var _this=this;
     var url="";
     if(_this.formType=="add"){
@@ -255,12 +241,16 @@ var MainCont=React.createClass({
       data:data,
       success:function(data){
         alert(data.info);
-
         if(data.code!="SUCCESS"){
           _this.setState({formData:_this.state.formData})
         }else{
           _this.toggleModal();
 
+          if(_this.formType=="add"){
+            var page=_this.state.page;
+            page.page_index=1;
+            _this.setState({page:page,formData:[]});
+          }
           _this.upData(function(){
             
           });
@@ -268,8 +258,13 @@ var MainCont=React.createClass({
       }
     })
    },
-   
-   removeItem:function(id){
+   onSetSelIdx:function(idx){ //选择分页回调
+    var page=this.state.page;
+    page.page_index=idx;
+    this.setState({page:page});
+    this.upData();
+   },
+   removeItem:function(id){  //删除数据
 
       var _this=this;
         Alert.show({
@@ -300,6 +295,31 @@ var MainCont=React.createClass({
    },
    render: function () {
 
+
+      var cont= this.state.rendData.map(function(obj,idx){
+      return(
+          <tr key={idx}>
+                {/*<td>
+                    <input name="select"  className="select-box" value="all" type="checkbox" />
+                </td> */}
+                <td>{obj.id}</td>
+                <td>{obj.type_name}</td>
+                <td>{obj.rule}</td>
+                <td>{obj.address}</td>
+                <td>{obj.method}</td>
+                <td>{obj.name}</td>
+                <td>{obj.remark }</td>
+                <td>{obj.is_public_name}</td>
+                <td>
+                <div className="btn-group mb15">
+                    <a href="javascript:;" onClick={this.eidtColumn.bind(this,obj.id)} className="btn btn-sm btn-info">更新资源</a>
+                    <button className="btn btn-sm btn-default" onClick={this.removeItem.bind(this,obj.id)} type="button">删除资源</button>
+                </div>
+            </td>
+        </tr>  
+         );
+    },this)
+  var LoadCont=this.state.loading?<div className="fixed-loading-bg"><Loading /></div>:"";
     return (
         <div>
             <div className="page-heading">
@@ -330,8 +350,8 @@ var MainCont=React.createClass({
                             <Modal title="编辑资源" maxWidth="1000" show={this.state.modalShow} onClose={this.toggleModal} name="eidtModal">
                                 <RenderForm rendData={this.state.formData} getSubVal={this.setEidtForm} name="eidtForm" />
                             </Modal>
-                            <div className="table-responsive">
-                                <table className="table mt20 table-striped">
+                            <div className="table-responsive fixed-loading">
+                                <table className="table mt20 table-striped ">
                                     <thead>
                                         <tr>
                                             {/*<th>
@@ -349,33 +369,12 @@ var MainCont=React.createClass({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {this.state.rendData.map(function(obj,idx){
-                                            return(
-                                              <tr key={idx}>
-                                                {/*<td>
-                                                    <input name="select"  className="select-box" value="all" type="checkbox" />
-                                                </td> */}
-                                                <td>{obj.id}</td>
-                                                <td>{obj.type_name}</td>
-                                                <td>{obj.rule}</td>
-                                                <td>{obj.address}</td>
-                                                <td>{obj.method}</td>
-                                                <td>{obj.name}</td>
-                                                <td>{obj.remark }</td>
-                                                <td>{obj.is_public_name}</td>
-                                                <td>
-                                                    <div className="btn-group mb15">
-                                                        <a href="javascript:;" onClick={this.eidtColumn.bind(this,obj.id)} className="btn btn-sm btn-info">更新资源</a>
-                                                        <button className="btn btn-sm btn-default" onClick={this.removeItem.bind(this,obj.id)} type="button">删除资源</button>
-                                                    </div>
-                                                </td>
-                                            </tr>  
-                                            );
-                                        },this)}
+                                        {cont}
                                     </tbody>
                                 </table>
 
-                                <Pager all_num={this.state.page.record_count} all_page_num={this.state.page.page_count} sel_index={this.state.page.page_index} />
+                                {LoadCont}
+                                <Pager all_num={this.state.page.record_count} all_page_num={this.state.page.page_count} sel_index={this.state.page.page_index}  onSetSelIdx={this.onSetSelIdx} />
                             </div>
                         </div>
                     </div>

@@ -54,8 +54,8 @@ var Pager = React.createClass({
     }
   },
   setSelIdx:function(idx){
-    if(this.props.setSelIdx){
-      this.props.setSelIdx(idx)
+    if(this.props.onSetSelIdx){
+      this.props.onSetSelIdx(idx)
     }
   },
   selChange:function(){
@@ -81,7 +81,7 @@ var Pager = React.createClass({
       if(this.state.all_num==0){
         return (
           <div className="page tc">
-            暂无数据
+            
           </div>
         );
       }

@@ -47,7 +47,7 @@ var RenderForm = React.createClass({
     }
   },
   componentWillReceiveProps:function(nextProps){
-       console.log(nextProps)
+     
     if(nextProps.rendData&&nextProps.rendData!=this.state.resData){
       this.propsSetForm(nextProps.rendData);
     }
