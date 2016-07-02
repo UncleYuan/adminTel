@@ -10,7 +10,7 @@ var isProduction = function () {
 // 定义输出文件夹
 var outputDir = 'E:/working/zhaomi/test/admin-new/Public/admin/dist';
 // 定义开发文件夹
-var entryPath = 'E:/前端资源库/webpack-best-practice/admin/views';
+var entryPath = 'E:/前端资源库/adminTel/admin/views';
 /** 定义插件
  *  CommonsChunkPlugin 插件会根据各个生成的模块中共用的模块，然后打包成一个common.js 文件。
  *  ProvidePlugin 插件可以定义一个共用的入口，比如 下面加的 React ,他会在每个文件自动require了react，所以你在文件中不需要 require('react')，也可以使用 React。

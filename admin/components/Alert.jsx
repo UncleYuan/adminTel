@@ -61,7 +61,7 @@ var AlertModal = React.createClass({
   },
   render: function() {
     return (
-        <Modal type={this.props.type} show={this.state.show} title={this.props.title} footer={this.getBtnHtml()} onClose={this.closeModal}>
+        <Modal type={this.props.type} show={this.state.show} title={this.props.title} footer={this.getBtnHtml()} w="m" onClose={this.closeModal}>
           {this.props.cont}  
         </Modal>
     )
@@ -74,7 +74,7 @@ var Alert={};
 var config={}
 Alert.show = function (conf) {
   conf=conf||{};
-  console.log(conf)
+  
   conf.show=true;
   config=conf;
   conf.onClose=function(){

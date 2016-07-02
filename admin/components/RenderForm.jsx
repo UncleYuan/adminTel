@@ -5,6 +5,17 @@ var CheckRadio = require('../components/CheckRadio');
 var SelUpImg = require('../components/SelUpImg');
 var SetMobileCont = require('../components/SetMobileCont');
 var GetMsgCode = require('../components/GetMsgCode');
+
+var serializeObject=function(arr){  
+    var obj=new Object();  
+    $.each(arr,function(index,param){  
+        if(!(param.name in obj)){  
+            obj[param.name]=param.value;  
+        }  
+    });  
+    return obj;  
+};  
+
 var RenderForm = React.createClass({
   getDefaultProps:function(){
       return {
@@ -36,8 +47,9 @@ var RenderForm = React.createClass({
     }
   },
   componentWillReceiveProps:function(nextProps){
+       console.log(nextProps)
     if(nextProps.rendData&&nextProps.rendData!=this.state.resData){
-      this.propsSetForm();
+      this.propsSetForm(nextProps.rendData);
     }
   },
   upDataForm:function(){
@@ -46,8 +58,9 @@ var RenderForm = React.createClass({
         _this.setState({loading:false,resData:data.data});
       },'json')
   },
-  propsSetForm:function(){
-    this.setState({loading:false,resData:this.props.rendData});
+  propsSetForm:function(data){
+
+    this.setState({loading:false,resData:data||this.props.rendData});
   },
   goSub:function(e){
     e.preventDefault();
@@ -61,7 +74,7 @@ var RenderForm = React.createClass({
         if(_this.props.getSubVal) _this.props.getSubVal(postData,data);
       },'json')
     }else{
-      _this.props.getSubVal(postData);
+      _this.props.getSubVal(serializeObject(postData));
     }
   },
   openModal:function(){
@@ -77,6 +90,7 @@ var RenderForm = React.createClass({
     this.setState({imgList1:data});
   },
   getFormHtml:function(res){
+
     var rendHtml=[];
     var _this=this;
     var n=0;
@@ -93,7 +107,9 @@ var RenderForm = React.createClass({
   setTab:function(value,arr){
 
     var newData=this.state.resData;
+
     newData[arr].defaultValue=value;
+
     this.setState({resData:newData})
   },
   getComponents:function(newSelFields,i,n){
@@ -137,7 +153,7 @@ var RenderForm = React.createClass({
         var  newArr=[]
         for(var h in newSelFields.options){
           for(var x in newSelFields.options[h].child){
-            if(newSelFields.defaultValue==h){
+            if(newSelFields.defaultValue==newSelFields.options[h].value){
               newArr.push(<div >{this.getComponents(newSelFields.options[h].child[x],newSelFields.name,newSelFields.name)}</div>);
             }
           }

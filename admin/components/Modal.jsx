@@ -7,7 +7,7 @@ var Modal = React.createClass({
         title:"新窗口",
         type:"checkbox",
         ifBindSP:false,
-        maxWidth:false,
+        w:"l",
         showClass:'fadeInUp'
 	    };
 	},
@@ -44,11 +44,11 @@ var Modal = React.createClass({
       var bgClass=this.state.show?"in":"";
       var modelClass=this.state.show?this.props.showClass:"hide";
       var height={height:document.body.clientHeight};
-      var s=this.props.maxWidth?{"minWidth":this.props.maxWidth+"px"}:{}
+
       return (
         <div className="modal " style={style}>
             <div className={"modal-backdrop "+bgClass} style={height}></div>
-            <div className={"modal-dialog animated l "+modelClass}  style={s}>
+            <div className={"modal-dialog animated  "+modelClass+" "+this.props.w} >
                 <div className="modal-content">
                     <div className="modal-header">
                       <a className="bootbox-close-button close"  onClick={this.closeModal}>×</a>

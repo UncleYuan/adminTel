@@ -9,58 +9,130 @@ var Alert = require('../components/Alert');
 var RenderForm = require('../components/RenderForm');
 var $=require('jquery');
 require('../lib/jqExtend');
+var deepCopy= function(source) { 
+  var result={};
+  for (var key in source) {
+    result[key] = typeof source[key]==='object'?deepCopy(source[key]):source[key];
+  } 
+  return result; 
+}
+var ymData = {
+    "rule": {
+        "field": "rule",
+        "name": "接口规则，参考thinkphp路由定义",
+        "defaultValue": "",
+        "type": "input"
+    },
+    "address": {
+        "field": "address",
+        "name": "接口指向的控制器，格式：模块/控制器/方法",
+        "defaultValue": "",
+        "type": "input"
+    },
+    "name": {
+        "field": "name",
+        "name": "接口名称",
+        "defaultValue": "",
+        "type": "input"
+    },
+    
+    "remark": {
+        "field": "remark",
+        "name": "备注",
+        "defaultValue": "",
+        "type": "textarea"
+    },
+    "options": {
+        "field": "options",
+        "name": "路由选项",
+        "defaultValue": "",
+        "type": "textarea"
+    },
+    "is_public": {
+        "field": "is_public",
+        "name": "是否是公开接口",
+        "defaultValue": "",
+        "type": "radio",
+        "inline": true,
+        "options": [{
+            "name": "否",
+            "value": 0
+        }, {
+            "name": "是",
+            "value": 1
+        }]
+    }
+}
 
-var res={
-    "code": "SUCCESS",
-    "info": "操作成功",
-    "data": {
-        "id":{
-            "field": "_id",
-            "defaultValue":"",
-            "type": "hidden"
-        },
+var apiData=deepCopy(ymData);
+
+apiData["method"]={
+          "field": "method",
+          "name": "接口请求类型",
+          "defaultValue": "",
+          "type": "radio",
+          "inline": true,
+          "options": [{
+              "name": "GET",
+              "value": "get"
+          }, {
+              "name": "POST",
+              "value": "post"
+          }, {
+              "name": "DELETE",
+              "value":"delete"
+          },{
+              "name": "PUT",
+              "value":"put"
+          },{
+              "name": "HEAD",
+              "value":"head"
+          }]
+      };
+var qtData = {
+    "name": {
+        "field": "name",
+        "name": "接口名称",
+        "defaultValue": "",
+        "type": "input"
+    },
+
+    "remark": {
+        "field": "remark",
+        "name": "备注",
+        "defaultValue": "",
+        "type": "textarea"
+    }
+}
+
+var formData={
+
         
-        "isPage": {
+        "type": {
             "field": "type",
             "name": "资源类型",
-            "remark": "",
-            "defaultValue": "0",
+            "defaultValue": "1",
             "type": "tab",
             "options": [
-                {
-                    "name": "否",
-                    "value":0,
-                    "child": {
-                      "content": {
-                          "field": "content",
-                          "name": "图文介绍",
-                          "remark": "",
-                          "required": "1",
-                          "defaultValue": "",
-                          "type": "html",
-                          "length": "6000"
-                      }
-                    }
+                { 
+                    "name": "页面",
+                    "value":1,
+                    "child":ymData
                 },
                 {
-                    "name": "是",
-                    "value": 1,
-                    "child": {
-                       "content": {
-                          "field": "content",
-                          "name": "图文介绍",
-                          "remark": "",
-                          "required": "1",
-                          "defaultValue": "",
-                          "type": "html",
-                          "length": "6000"
-                      }
-                    }
+                    "name": "接口",
+                    "value": 2,
+                    "child": apiData
+                },
+                {
+                    "name": "其他",
+                    "value": 3,
+                    "child":qtData
                 }
             ]
         }
     }
-}
+
 
 
 var MainCont=React.createClass({
@@ -85,7 +157,8 @@ var MainCont=React.createClass({
             record_count:0
           },
           len:10,
-          formData:res.data
+
+          formData:formData
       };
    },
    componentWillReceiveProps:function(nextProps){
@@ -114,80 +187,91 @@ var MainCont=React.createClass({
          if(callback) callback();
       },'json')
    },
-
-   turnAjaxData:function(nowData,typeData){
-      for(var i in typeData){
-          if(nowData[i]&&nowData[i].type!="tab"){
-            nowData[i].defaultValue=typeData[i];
-          }else if(nowData[i]&&nowData[i].type=="tab"){
-              nowData[i].defaultValue=typeData[i];
-              for(var h in nowData[i].options){
-                for(var x in typeData){
-                  if(nowData[i].options[h].child[x]){
-                    nowData[i].options[h].child[x].defaultValue=typeData[x];
-                  }
-                  
-                }
-              }
-          }
-      }
-      return nowData;
-   },
+   formType:"add",
    eidtColumn:function(id){
       var _this=this;
-      $.get('/admin/article_type_add',{api:1,_id:id},function(data){
-        var typeData=data.data.nowType;
-        var nowData=_this.state.formData;
-        _this.turnAjaxData(nowData,typeData);
+      $.get('/system/resource/'+id+'.do',function(data){
+        if(data.data.type==1){
+          var nowData=deepCopy(ymData);
+          for(var i in data.data){
+            if(nowData[i])nowData[i].defaultValue=data.data[i]
+          }
+        }else if(data.data.type==2){
+          var nowData=deepCopy(apiData);
+          for(var i in data.data){
+            if(nowData[i])nowData[i].defaultValue=data.data[i]
+          }
+        }else if(data.data.type==3){
+          var nowData=deepCopy(qtData);
+          for(var i in data.data){
+            if(nowData[i])nowData[i].defaultValue=data.data[i]
+          }
+        }
+        nowData["type"]={
+          "field": "type",
+          "name": "资源类型",
+          "defaultValue":data.data.type,
+          "type": "hidden"
+        }
+        nowData["id"]={
+          "field": "id",
+          "name": "",
+          "defaultValue":id,
+          "type": "hidden"
+        }
+        _this.formType="eidt";
         _this.setState({formData:nowData})
-
+        _this.toggleModal();
       },'json')
-      this.toggleModal();
+      
    },
    toggleModal:function(){
     this.setState({modalShow:!this.state.modalShow})
    },
    addColumn:function(){
-      
+      this.formType="add";
+      this.setState({formData:formData,modalShow:!this.state.modalShow})
+
    },
    setEidtForm:function(data){
     var _this=this;
-    $.post('/admin/article_type_add?api=1',data,function(data){
-      alert(data.info);
-
-      if(data.code!="SUCCESS"){
-        _this.setState({formData:_this.state.formData})
-      }else{
-        _this.upData(function(){
-          _this.toggleModal();
-        });
+    var url="";
+    if(_this.formType=="add"){
+      if(data.type==1){
+        url="/system/resource/page.do";
+      }else if(data.type==2){
+        url="/system/resource/api.do";
+       
+      }else if(data.type==3){
+        url="/system/resource/other.do";  
       }
-    },'json')
+    }else{
+      url="/system/resource/"+data.id+".do"
+    }
+    delete data.type;
+    $.ajax({
+      url:url,
+      type:_this.formType=="add"?"post":"put",
+      data:data,
+      success:function(data){
+        alert(data.info);
+
+        if(data.code!="SUCCESS"){
+          _this.setState({formData:_this.state.formData})
+        }else{
+          _this.toggleModal();
+
+          _this.upData(function(){
+            
+          });
+        }
+      }
+    })
    },
-   DelYesFn:function(){
-      var _this=this;
-      if(this.delId){
-         $.showProgress()
-         $.post('/admin/article_type_del',{_id:this.delId,api:1},function(data){
-            $.toast({msg:data.info});
-            $.hideProgress();
-            if(data.code=="SUCCESS"){
-               PubSub.publish('Alert',{show:false});
-               _this.upData();
-            }else{
-               
-            }
-         },'json')
-      } 
-   },
-   delId:false,
-   delColumn:function(id,name){
-      this.delId=id;
-      PubSub.publish('Alert',{show:true,txt:"是否要删除'"+name+"'栏目"});
-   },
+   
    removeItem:function(id){
 
-
+      var _this=this;
         Alert.show({
             cont:<div className="fs20">确认是否要删除id为 {id} 的资源？</div>,
             btnOptions:[
@@ -196,11 +280,14 @@ var MainCont=React.createClass({
                     type:'warning',
                     onCli:function(closeFn){
                         $.ajax({
-                            url:'/system/resource/'+id+'1231231.do',
+                            url:'/system/resource/'+id+'.do',
                             type: 'DELETE',
                             success:function(data){
+                              if(data.code=="SUCCESS"){
                                 closeFn();
-                                $.toast({msg:data.info})
+                                _this.upData();
+                              }
+                              $.toast({msg:data.info})
                             }
                         })
                     }
@@ -236,7 +323,7 @@ var MainCont=React.createClass({
                     </header>
                     <div className="panel-body">
                         <div className="btn-group mb15">
-                            <a href="javascript:;" onClick={this.toggleModal} className="btn btn-info">添加资源</a>
+                            <a href="javascript:;" onClick={this.addColumn} className="btn btn-info">添加资源</a>
                             {/*<button className="btn btn-default" type="button">删除所选资源</button>*/}
                         </div>
                         <div id="column-table">
@@ -278,7 +365,7 @@ var MainCont=React.createClass({
                                                 <td>{obj.is_public_name}</td>
                                                 <td>
                                                     <div className="btn-group mb15">
-                                                        <a href="/admin/article_type_add" className="btn btn-sm btn-info">更新资源</a>
+                                                        <a href="javascript:;" onClick={this.eidtColumn.bind(this,obj.id)} className="btn btn-sm btn-info">更新资源</a>
                                                         <button className="btn btn-sm btn-default" onClick={this.removeItem.bind(this,obj.id)} type="button">删除资源</button>
                                                     </div>
                                                 </td>
